@@ -289,41 +289,22 @@ function addStation(name,icon){
 
 async function fetchTrain(trainNo){
 
-  const url =
-`/api/running?train=${encodeURIComponent(trainNo)}`;
-
-    const response = await fetch(url,{
-
-        method:"GET",
-
-        headers:{
-
-            "Content-Type":"application/json",
-
-            "x-rapidapi-key":CONFIG.API_KEY,
-
-            "x-rapidapi-host":CONFIG.API_HOST
-
-        }
-
-    });
+    const response = await fetch(
+        `/api/running?train=${encodeURIComponent(trainNo)}`
+    );
 
     if(!response.ok){
-
         throw new Error("HTTP Error : " + response.status);
-
     }
 
     const json = await response.json();
 
-    console.log(json);
-
     if(json.status !== "success"){
-
         throw new Error("Train Not Found");
-
     }
 
+    return json.data;
+}
     return json.data;
 
 }
