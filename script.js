@@ -40,6 +40,16 @@ document.getElementById("liveStatus");
 const refreshBtn =
 document.getElementById("refreshBtn");
 
+const journeyTime =
+document.getElementById("journeyTime");
+
+const runDays =
+document.getElementById("runDays");
+
+const totalDistance =
+document.getElementById("totalDistance");
+
+
 // ===============================
 // Button Event
 // ===============================
@@ -178,6 +188,21 @@ new Date().toLocaleTimeString();
 
 liveStatus.textContent =
 "🟢 LIVE";
+
+journeyTime.textContent =
+res.journey_time
+? res.journey_time + " Min"
+: "--";
+
+runDays.textContent =
+res.run_days || "--";
+
+totalDistance.textContent =
+res.total_distance
+? res.total_distance + " KM"
+: "--";
+
+
     // Next Station
 
     if(res.upcoming_stations &&
