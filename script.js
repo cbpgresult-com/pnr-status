@@ -289,8 +289,8 @@ function addStation(name,icon){
 
 async function fetchTrain(trainNo){
 
-    const url =
-        `${CONFIG.API_URL}?trainnumber=${encodeURIComponent(trainNo)}&start_day=0`;
+  const url =
+`/api/running?train=${encodeURIComponent(trainNo)}`;
 
     const response = await fetch(url,{
 
