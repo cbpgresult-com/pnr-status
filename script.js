@@ -1,326 +1,295 @@
-const subjects = [
+// ===============================
+// Live Train Status
+// Part 2A
+// ===============================
 
-{
+const trainInput = document.getElementById("trainNumber");
+const searchBtn = document.getElementById("searchBtn");
 
-code:"221005",
+const loading = document.getElementById("loading");
+const result = document.getElementById("result");
 
-title:"BOTANY (MAJOR 1)",
+const trainName = document.getElementById("trainName");
+const trainNo = document.getElementById("trainNo");
 
-paper:"Archegoniates & Plant Architecture",
+const source = document.getElementById("source");
+const destination = document.getElementById("destination");
 
-theoryObt:48,
-theoryMax:75,
+const currentStation = document.getElementById("currentStation");
+const nextStation = document.getElementById("nextStation");
 
-sessionalObt:24,
-sessionalMax:25,
+const platform = document.getElementById("platform");
+const delay = document.getElementById("delay");
 
-practicalObt:"",
-practicalMax:"",
+const eta = document.getElementById("eta");
+const etd = document.getElementById("etd");
 
-total:69,
+const statusBadge = document.getElementById("statusBadge");
 
-grade:"B+",
+const routeTimeline = document.getElementById("routeTimeline");
 
-credit:"28.00"
 
-},
+// ===============================
+// Button Event
+// ===============================
 
-{
+searchBtn.addEventListener("click", searchTrain);
 
-code:"221006",
+trainInput.addEventListener("keypress", function(e){
 
-title:"",
+    if(e.key==="Enter"){
 
-paper:"Land Plants Architecture",
+        searchTrain();
 
-theoryObt:"",
-theoryMax:"",
-
-sessionalObt:24,
-sessionalMax:25,
-
-practicalObt:63,
-practicalMax:75,
-
-total:87,
-
-grade:"A+",
-
-credit:"18.00"
-
-}
-
-];
-
-const tbody = document.getElementById("marksBody");
-
-tbody.innerHTML = "";
-
-subjects.forEach(function(sub){
-
-tbody.innerHTML += `
-
-<tr>
-
-<td>${sub.code}</td>
-
-<td>
-
-${sub.title ? `<b>${sub.title}</b><br>` : ""}
-
-<span class="paper-name">
-
-${sub.paper}
-
-</span>
-
-</td>
-
-<td>${sub.theoryObt}</td>
-<td>${sub.theoryMax}</td>
-
-<td>${sub.sessionalObt}</td>
-<td>${sub.sessionalMax}</td>
-
-<td>${sub.practicalObt}</td>
-<td>${sub.practicalMax}</td>
-
-<td><b>${sub.total}</b></td>
-<td>100</td>
-
-<td>${sub.grade}</td>
-
-<td>${sub.credit}</td>
-
-<td></td>
-
-</tr>
-
-`;
+    }
 
 });
-/* ==========================================
-   API URL
-========================================== */
 
-const API_URL =
-"https://script.google.com/macros/s/AKfycbwcuRt0wI_st92B8kKVYjYbc_K80_ZU8QAAlFQ32-NpBUwYFnYHtWRWndosFzQxUc5U/exec";
 
-/* ==========================================
-   SEARCH
-========================================== */
+// ===============================
+// Main Function
+// ===============================
 
-async function searchResult(){
+async function searchTrain(){
 
-const roll=document.getElementById("roll").value.trim();
+    const number = trainInput.value.trim();
 
-const father=document.getElementById("father").value.trim();
+    if(number.length<5){
 
-const year=document.getElementById("year").value;
+        alert("Enter Valid Train Number");
 
-const exam=document.getElementById("examType").value;
+        return;
 
-const course=document.getElementById("course").value;
+    }
 
-const sem=document.getElementById("sem").value;
+    loading.classList.remove("hidden");
 
-if(!roll || !father){
+    result.classList.add("hidden");
 
-alert("Enter Roll Number & Father Name");
+    routeTimeline.innerHTML="";
 
-return;
+    try{
 
-}
+        // API CALL
+        // Part 2B
 
-const url=
+        const data = await fetchTrain(number);
 
-API_URL+
+        fillResult(data);
 
-"?year="+year+
+    }
 
-"&roll="+roll+
+    catch(err){
 
-"&examType="+exam+
+        console.log(err);
 
-"&course="+course+
+        alert("Unable to fetch Train Status.");
 
-"&sem="+sem+
+    }
 
-"&father="+encodeURIComponent(father);
+    finally{
 
-try{
+        loading.classList.add("hidden");
 
-const res=await fetch(url);
-
-const data=await res.json();
-
-if(data.status!="found"){
-
-alert("Result Not Found");
-
-return;
+    }
 
 }
 
-fillMarksheet(data);
+
+
+// ===============================
+// Fill UI
+// ===============================
+
+function fillResult(res){
+
+    if(!res){
+
+        alert("No Data Found");
+
+        return;
+
+    }
+
+    result.classList.remove("hidden");
+
+    trainName.textContent =
+        res.train_name || "--";
+
+    trainNo.textContent =
+        "Train No : " + (res.train_number || "--");
+
+    source.textContent =
+        res.source_stn_name || res.source || "--";
+
+    destination.textContent =
+        res.dest_stn_name || res.destination || "--";
+
+    currentStation.textContent =
+        res.current_station_name ||
+        res.current_station ||
+        "--";
+
+    platform.textContent =
+        res.platform_number || "--";
+
+    delay.textContent =
+        (res.delay || 0) + " Min";
+
+    eta.textContent =
+        res.eta || "--";
+
+    etd.textContent =
+        res.etd || "--";
+
+
+    if(res.status){
+
+        statusBadge.textContent =
+        res.status;
+
+    }
+
+    else{
+
+        statusBadge.textContent =
+        "Running";
+
+    }
+
+
+    // Next Station
+
+    if(res.upcoming_stations &&
+       res.upcoming_stations.length>0){
+
+        nextStation.textContent =
+        res.upcoming_stations[0].station_name
+        ||
+        res.upcoming_stations[0].name
+        ||
+        "--";
+
+    }
+
+    else{
+
+        nextStation.textContent="--";
+
+    }
+
+
+    createTimeline(res);
 
 }
-catch(e){
 
-alert("Server Error");
 
-console.log(e);
+
+// ===============================
+// Timeline
+// ===============================
+
+function createTimeline(res){
+
+    routeTimeline.innerHTML="";
+
+
+
+    if(res.previous_stations){
+
+        res.previous_stations.forEach(st=>{
+
+            addStation(
+
+                st.station_name ||
+
+                st.name ||
+
+                "--",
+
+                "✓"
+
+            );
+
+        });
+
+    }
+
+
+
+    if(res.current_station_name){
+
+        addStation(
+
+            res.current_station_name,
+
+            "🚆"
+
+        );
+
+    }
+
+
+
+    if(res.upcoming_stations){
+
+        res.upcoming_stations.forEach(st=>{
+
+            addStation(
+
+                st.station_name ||
+
+                st.name ||
+
+                "--",
+
+                "○"
+
+            );
+
+        });
+
+    }
 
 }
 
-}
 
-/* ==========================================
-   FILL DATA
-========================================== */
 
-function fillMarksheet(data){
+// ===============================
+// Add Station
+// ===============================
 
-document.getElementById("studentName").innerHTML=data.student;
+function addStation(name,icon){
 
-document.getElementById("fatherName").innerHTML=data.father;
+    const div=document.createElement("div");
 
-document.getElementById("motherName").innerHTML=data.mother;
+    div.className="station";
 
-document.getElementById("rollNo").innerHTML=data.roll;
+    div.innerHTML=`
 
-document.getElementById("enrolNo").innerHTML=data.enrollment;
+        <span style="font-size:20px;">
+            ${icon}
+        </span>
 
-document.getElementById("examType").innerHTML=data.examType;
+        <span>
+            ${name}
+        </span>
 
-document.getElementById("courseTitle").innerHTML=data.courseName;
+    `;
 
-document.getElementById("semesterTitle").innerHTML=data.semesterName;
-
-document.getElementById("collegeName").innerHTML=data.college;
-
-document.getElementById("serialNo").innerHTML=data.serial;
-
-document.getElementById("sgpa").innerHTML=data.sgpa;
-
-document.getElementById("cgpaValue").innerHTML=data.cgpa;
-
-document.getElementById("creditPoints").innerHTML=data.credit;
-
-document.getElementById("totalMarks").innerHTML=data.total;
-
-document.getElementById("resultDate").innerHTML=data.resultDate;
-
-document.getElementById("resultStatus").innerHTML=data.result;
-
-/* QR */
-
-document.getElementById("qrImage").src=data.qr;
-
-/* TABLE */
-
-loadSubjects(data.subjects);
+    routeTimeline.appendChild(div);
 
 }
 
-/* ==========================================
-   SUBJECT TABLE
-========================================== */
 
-function loadSubjects(subjects){
 
-const body=document.getElementById("marksBody");
+// ===============================
+// Placeholder
+// API in Part 2B
+// ===============================
 
-body.innerHTML="";
+async function fetchTrain(trainNo){
 
-subjects.forEach(function(s){
-
-body.innerHTML+=`
-
-<tr>
-
-<td>${s.code}</td>
-
-<td>
-
-<b>${s.subject}</b>
-
-<br>
-
-<span class="paper-name">
-
-${s.paper}
-
-</span>
-
-</td>
-
-<td>${s.theoryObt}</td>
-
-<td>${s.theoryMax}</td>
-
-<td>${s.sessionalObt}</td>
-
-<td>${s.sessionalMax}</td>
-
-<td>${s.practicalObt}</td>
-
-<td>${s.practicalMax}</td>
-
-<td>
-
-<b>
-
-${s.total}
-
-</b>
-
-</td>
-
-<td>
-
-${s.max}
-
-</td>
-
-<td>
-
-${s.grade}
-
-</td>
-
-<td>
-
-${s.credit}
-
-</td>
-
-<td></td>
-
-</tr>
-
-`;
-
-});
-
-}
-
-/* ==========================================
-   PRINT
-========================================== */
-
-function printMarksheet(){
-
-window.print();
-
-}
-
-/* ==========================================
-   DOWNLOAD PDF
-========================================== */
-
-function downloadPDF(){
-
-window.print();
+    throw "API not connected.";
 
 }
